@@ -7,9 +7,14 @@
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^14.4.3",
+    "@thatopen/components": "3.2.6",
+    "@thatopen/fragments": "3.2.6",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "web-vitals": "^3.1.0"
+    "web-vitals": "^3.1.0",
+    "three": "^0.175.0",
+    "web-ifc": "latest",
+    "web-ifc-three": "latest"
   },
   "overrides": {
     "@svgr/webpack": "^8.0.1",
