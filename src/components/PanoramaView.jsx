@@ -1,10 +1,9 @@
 import React, { useRef, useEffect, useState } from 'react';
 import './PanoramaView.css';
 import 'pannellum/build/pannellum.css';
-import * as pannellumModule from 'pannellum';
 
-// Extract pannellum from the module
-const pannellum = pannellumModule.default || pannellumModule.pannellum || pannellumModule;
+// Pannellum registers itself globally on the window object
+// We'll load it dynamically
 
 export default function PanoramaView({
   panoramaBlob,
@@ -17,19 +16,45 @@ export default function PanoramaView({
   const imageUrlRef = useRef(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [pannellumLoaded, setPannellumLoaded] = useState(false);
+
+  // Load Pannellum library dynamically
+  useEffect(() => {
+    const loadPannellum = async () => {
+      try {
+        // Import the Pannellum script
+        await import('pannellum/build/pannellum.js');
+
+        // Pannellum registers itself on window.pannellum
+        if (window.pannellum) {
+          console.log('Pannellum loaded successfully from window');
+          setPannellumLoaded(true);
+        } else {
+          console.error('Pannellum script loaded but window.pannellum not found');
+          setError('Failed to load Pannellum library');
+        }
+      } catch (err) {
+        console.error('Failed to load Pannellum:', err);
+        setError('Failed to load panorama viewer library');
+      }
+    };
+
+    loadPannellum();
+  }, []);
 
   // Initialize/update panorama viewer
   useEffect(() => {
     console.log('PanoramaView effect running', {
       hasContainer: !!containerRef.current,
-      hasPannellum: !!pannellum,
+      hasPannellum: pannellumLoaded,
       hasBlob: !!panoramaBlob,
-      pannellumType: typeof pannellum
+      windowPannellum: typeof window.pannellum
     });
 
-    if (!containerRef.current || !pannellum || !panoramaBlob) {
-      if (!pannellum) {
-        setError('Pannellum library not loaded');
+    if (!containerRef.current || !pannellumLoaded || !panoramaBlob) {
+      if (!pannellumLoaded) {
+        // Still loading, not an error yet
+        return;
       }
       return;
     }
@@ -70,15 +95,15 @@ export default function PanoramaView({
     // Initialize Pannellum viewer
     try {
       console.log('Initializing Pannellum viewer...', {
-        viewerFunction: typeof pannellum.viewer,
+        viewerFunction: typeof window.pannellum.viewer,
         imageUrl
       });
 
-      if (typeof pannellum.viewer !== 'function') {
-        throw new Error(`Pannellum.viewer is not a function (type: ${typeof pannellum.viewer}). Module structure: ${Object.keys(pannellum).join(', ')}`);
+      if (typeof window.pannellum.viewer !== 'function') {
+        throw new Error(`window.pannellum.viewer is not a function (type: ${typeof window.pannellum.viewer}). Module structure: ${Object.keys(window.pannellum).join(', ')}`);
       }
 
-      const viewer = pannellum.viewer(containerRef.current, {
+      const viewer = window.pannellum.viewer(containerRef.current, {
         type: 'equirectangular',
         panorama: imageUrl,
         autoLoad: true,
@@ -127,7 +152,7 @@ export default function PanoramaView({
         imageUrlRef.current = null;
       }
     };
-  }, [panoramaBlob, location]);
+  }, [panoramaBlob, location, pannellumLoaded]);
 
   if (!panoramaBlob) {
     return (
