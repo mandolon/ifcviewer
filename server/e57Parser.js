@@ -25,7 +25,7 @@ export async function parseE57File(filePath, onProgress = () => {}) {
     onProgress(10);
 
     // Spawn Python process
-    const pythonProcess = spawn('python3', [pythonScript, filePath]);
+    const pythonProcess = spawn('C:\\Users\\alope\\AppData\\Local\\Programs\\Python\\Python312\\python.exe', [pythonScript, filePath]);
 
     let stdout = '';
     let stderr = '';

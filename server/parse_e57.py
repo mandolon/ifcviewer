@@ -278,7 +278,7 @@ def extract_point_cloud(e57, source_format):
     for scan_index in range(e57.scan_count):
         try:
             header = e57.get_header(scan_index)
-            data = e57.read_scan(scan_index)
+            data = e57.read_scan(scan_index, ignore_missing_fields=True)
 
             # Extract XYZ coordinates (standard across all E57 files)
             if 'cartesianX' in data and 'cartesianY' in data and 'cartesianZ' in data:
@@ -327,10 +327,13 @@ def extract_scans_and_images(e57, source_format):
     for scan_index in range(e57.scan_count):
         try:
             header = e57.get_header(scan_index)
+            
+            # Convert ScanHeader to dict for easier access
+            header_dict = header.__dict__ if hasattr(header, '__dict__') else dict(header)
 
             # Extract pose (position and rotation)
             # Try multiple paths for compatibility
-            pose = header.get('pose', {})
+            pose = header_dict.get('pose', {})
 
             # Extract position (standard across formats)
             translation = pose.get('translation', {})
@@ -349,8 +352,8 @@ def extract_scans_and_images(e57, source_format):
             compass_heading = quaternion_to_compass_heading(quat)
 
             # Extract metadata
-            scan_id = header.get('guid', f'scan_{scan_index + 1}')
-            scan_name = header.get('name', header.get('description', f'Scan {scan_index + 1}'))
+            scan_id = header_dict.get('guid', f'scan_{scan_index + 1}')
+            scan_name = header_dict.get('name', header_dict.get('description', f'Scan {scan_index + 1}'))
 
             image_file = f'image_{scan_index}'
 
@@ -367,7 +370,7 @@ def extract_scans_and_images(e57, source_format):
 
             # Try to extract panoramic image
             try:
-                image_data = extract_image_from_scan(e57, scan_index, header, source_format)
+                image_data = extract_image_from_scan(e57, scan_index, header_dict, source_format)
                 if image_data:
                     # Convert to base64 for JSON transport
                     panorama_images[image_file] = base64.b64encode(image_data).decode('utf-8')
@@ -381,9 +384,19 @@ def extract_scans_and_images(e57, source_format):
             log_debug(f"Warning: Error processing scan {scan_index}: {e}")
             continue
 
+    # Get project name from first scan if available
+    project_name = "E57 Project"
+    if e57.scan_count > 0:
+        try:
+            first_header = e57.get_header(0)
+            first_header_dict = first_header.__dict__ if hasattr(first_header, '__dict__') else dict(first_header)
+            project_name = first_header_dict.get('projectName', first_header_dict.get('name', 'E57 Project'))
+        except:
+            pass
+
     metadata = {
         "version": "1.0",
-        "projectName": header.get('projectName', header.get('name', 'E57 Project')),
+        "projectName": project_name,
         "scans": scans
     }
 
