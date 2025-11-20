@@ -14,7 +14,8 @@ export default function PanoramaView({
   const containerRef = useRef(null);
   const viewerRef = useRef(null);
   const imageUrlRef = useRef(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const loadingTimeoutRef = useRef(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [pannellumLoaded, setPannellumLoaded] = useState(false);
 
@@ -119,7 +120,11 @@ export default function PanoramaView({
         maxHfov: 120,
         hotSpotDebug: false,
         onLoad: () => {
-          console.log('Pannellum loaded successfully');
+          console.log('Pannellum onLoad callback fired');
+          if (loadingTimeoutRef.current) {
+            clearTimeout(loadingTimeoutRef.current);
+            loadingTimeoutRef.current = null;
+          }
           setIsLoading(false);
         },
         onError: (err) => {
@@ -131,6 +136,12 @@ export default function PanoramaView({
 
       viewerRef.current = viewer;
       console.log('Pannellum viewer created');
+
+      // Fallback: Clear loading state after 3 seconds if onLoad hasn't fired
+      loadingTimeoutRef.current = setTimeout(() => {
+        console.warn('Pannellum onLoad callback did not fire within 3 seconds, clearing loading state');
+        setIsLoading(false);
+      }, 3000);
     } catch (err) {
       console.error('Error initializing Pannellum:', err);
       setError(`Failed to initialize panorama viewer: ${err.message}`);
@@ -139,6 +150,9 @@ export default function PanoramaView({
 
     // Cleanup
     return () => {
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+      }
       if (viewerRef.current) {
         try {
           viewerRef.current.destroy();
@@ -208,7 +222,7 @@ export default function PanoramaView({
         style={{ width: '100%', height: '100%' }}
       />
 
-      {isLoading && (
+      {isLoading && panoramaBlob && (
         <div className="panorama-loading">
           <div className="loading-spinner"></div>
           <div className="loading-text">Loading panorama...</div>
