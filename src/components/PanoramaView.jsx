@@ -1,8 +1,10 @@
 import React, { useRef, useEffect, useState } from 'react';
 import './PanoramaView.css';
+import 'pannellum/build/pannellum.css';
+import * as pannellumModule from 'pannellum';
 
-// Pannellum will be loaded dynamically
-let pannellum = null;
+// Extract pannellum from the module
+const pannellum = pannellumModule.default || pannellumModule.pannellum || pannellumModule;
 
 export default function PanoramaView({
   panoramaBlob,
@@ -16,27 +18,21 @@ export default function PanoramaView({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Load Pannellum library
-  useEffect(() => {
-    if (pannellum) return;
-
-    const loadPannellum = async () => {
-      try {
-        // Import Pannellum dynamically
-        const module = await import('pannellum');
-        pannellum = module.default || module;
-      } catch (err) {
-        console.error('Failed to load Pannellum:', err);
-        setError('Failed to load panorama viewer');
-      }
-    };
-
-    loadPannellum();
-  }, []);
-
   // Initialize/update panorama viewer
   useEffect(() => {
-    if (!containerRef.current || !pannellum || !panoramaBlob) return;
+    console.log('PanoramaView effect running', {
+      hasContainer: !!containerRef.current,
+      hasPannellum: !!pannellum,
+      hasBlob: !!panoramaBlob,
+      pannellumType: typeof pannellum
+    });
+
+    if (!containerRef.current || !pannellum || !panoramaBlob) {
+      if (!pannellum) {
+        setError('Pannellum library not loaded');
+      }
+      return;
+    }
 
     setIsLoading(true);
     setError(null);
@@ -60,6 +56,7 @@ export default function PanoramaView({
     // Create new image URL from blob
     const imageUrl = URL.createObjectURL(panoramaBlob);
     imageUrlRef.current = imageUrl;
+    console.log('Created blob URL:', imageUrl);
 
     // Calculate initial yaw from compass heading
     let initialYaw = 0;
@@ -72,6 +69,15 @@ export default function PanoramaView({
 
     // Initialize Pannellum viewer
     try {
+      console.log('Initializing Pannellum viewer...', {
+        viewerFunction: typeof pannellum.viewer,
+        imageUrl
+      });
+
+      if (typeof pannellum.viewer !== 'function') {
+        throw new Error(`Pannellum.viewer is not a function (type: ${typeof pannellum.viewer}). Module structure: ${Object.keys(pannellum).join(', ')}`);
+      }
+
       const viewer = pannellum.viewer(containerRef.current, {
         type: 'equirectangular',
         panorama: imageUrl,
@@ -88,6 +94,7 @@ export default function PanoramaView({
         maxHfov: 120,
         hotSpotDebug: false,
         onLoad: () => {
+          console.log('Pannellum loaded successfully');
           setIsLoading(false);
         },
         onError: (err) => {
@@ -98,9 +105,10 @@ export default function PanoramaView({
       });
 
       viewerRef.current = viewer;
+      console.log('Pannellum viewer created');
     } catch (err) {
       console.error('Error initializing Pannellum:', err);
-      setError('Failed to initialize panorama viewer');
+      setError(`Failed to initialize panorama viewer: ${err.message}`);
       setIsLoading(false);
     }
 
