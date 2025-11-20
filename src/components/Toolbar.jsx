@@ -10,7 +10,8 @@ export default function Toolbar({
   onViewModeChange,
   hotspotVisibility,
   onHotspotVisibilityToggle,
-  isFullyLoaded
+  isFullyLoaded,
+  hasPanoramas = true  // Default to true for backward compatibility
 }) {
   const formatDistance = (distance) => {
     if (distance < 1) {
@@ -33,9 +34,10 @@ export default function Toolbar({
               <label className="toolbar-label">View:</label>
               <div className="button-group">
                 <button
-                  className={`toolbar-button ${viewMode === 'split' ? 'active' : ''}`}
-                  onClick={() => onViewModeChange('split')}
-                  title="Split View"
+                  className={`toolbar-button ${viewMode === 'split' ? 'active' : ''} ${!hasPanoramas ? 'disabled' : ''}`}
+                  onClick={() => hasPanoramas && onViewModeChange('split')}
+                  title={hasPanoramas ? "Split View" : "Split View (No panoramas available)"}
+                  disabled={!hasPanoramas}
                 >
                   <span className="icon">⚌</span> Split
                 </button>
@@ -47,9 +49,10 @@ export default function Toolbar({
                   <span className="icon">•</span> Cloud
                 </button>
                 <button
-                  className={`toolbar-button ${viewMode === 'panorama-only' ? 'active' : ''}`}
-                  onClick={() => onViewModeChange('panorama-only')}
-                  title="Panorama Only"
+                  className={`toolbar-button ${viewMode === 'panorama-only' ? 'active' : ''} ${!hasPanoramas ? 'disabled' : ''}`}
+                  onClick={() => hasPanoramas && onViewModeChange('panorama-only')}
+                  title={hasPanoramas ? "Panorama Only" : "Panorama Only (No panoramas available)"}
+                  disabled={!hasPanoramas}
                 >
                   <span className="icon">◐</span> Pano
                 </button>

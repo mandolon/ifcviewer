@@ -78,6 +78,15 @@ export async function parseE57FileOnServer(file, onProgress = () => {}) {
 
     onProgress(100);
 
+    // Log diagnostic information
+    console.log('📊 E57 Parsing Results:', {
+      sourceFormat: data.sourceFormat || 'unknown',
+      pointCount: data.pointCloudData.pointCount,
+      hasColors: !!data.pointCloudData.colors,
+      scanCount: data.scanMetadata?.scans?.length || 0,
+      panoramaCount: panoramaBlobs.size
+    });
+
     return {
       pointCloudData: {
         positions: new Float32Array(data.pointCloudData.positions),
@@ -85,7 +94,8 @@ export async function parseE57FileOnServer(file, onProgress = () => {}) {
         pointCount: data.pointCloudData.pointCount
       },
       scanMetadata: data.scanMetadata,
-      panoramaBlobs: panoramaBlobs
+      panoramaBlobs: panoramaBlobs,
+      sourceFormat: data.sourceFormat || 'unknown'  // Pass through for diagnostics
     };
 
   } catch (error) {

@@ -91,8 +91,18 @@ export default function PointCloudPanoramaViewer() {
     setIsLoading(false);
   };
 
-  // Require point cloud, scan metadata, AND panoramas (all required)
-  const isFullyLoaded = pointCloudData && scanMetadata && panoramaBlobs.size > 0;
+  // Require point cloud and scan metadata - panoramas optional for diagnostic viewing
+  const hasMinimumData = pointCloudData && scanMetadata;
+  const hasPanoramas = panoramaBlobs.size > 0;
+  const isFullyLoaded = hasMinimumData && hasPanoramas;
+
+  // Auto-switch to point cloud only mode when no panoramas
+  React.useEffect(() => {
+    if (hasMinimumData && !hasPanoramas && viewMode !== 'pointcloud-only') {
+      console.log('📍 No panoramas available - switching to point cloud only view');
+      setViewMode('pointcloud-only');
+    }
+  }, [hasMinimumData, hasPanoramas, viewMode]);
 
   // Debug logging - always log state
   console.log('Loading state:', {
@@ -102,6 +112,7 @@ export default function PointCloudPanoramaViewer() {
     scanCount: scanMetadata?.scans?.length,
     hasPanoramas: panoramaBlobs.size > 0,
     panoramaCount: panoramaBlobs.size,
+    hasMinimumData,
     isFullyLoaded
   });
 
@@ -117,10 +128,11 @@ export default function PointCloudPanoramaViewer() {
         hotspotVisibility={hotspotVisibility}
         onHotspotVisibilityToggle={() => setHotspotVisibility(!hotspotVisibility)}
         isFullyLoaded={isFullyLoaded}
+        hasPanoramas={hasPanoramas}
       />
 
       <div className="pcpv-main-content">
-        {!isFullyLoaded && (
+        {!hasMinimumData && (
           <FileUploadPanel
             onPointCloudLoaded={handlePointCloudLoaded}
             onMetadataLoaded={handleMetadataLoaded}
@@ -131,8 +143,29 @@ export default function PointCloudPanoramaViewer() {
           />
         )}
 
-        {isFullyLoaded && (
+        {hasMinimumData && (
           <>
+            {/* Warning banner when panoramas are missing */}
+            {!hasPanoramas && (
+              <div style={{
+                position: 'absolute',
+                top: '60px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                zIndex: 1000,
+                background: '#ff9800',
+                color: 'white',
+                padding: '12px 24px',
+                borderRadius: '4px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                maxWidth: '600px',
+                textAlign: 'center'
+              }}>
+                ⚠️ <strong>No Panoramic Images Found</strong> - This E57 file contains point cloud data but no panoramic images.
+                Viewing point cloud only. Check server terminal for detailed extraction logs.
+              </div>
+            )}
+
             <LocationSidebar
               scans={scanMetadata?.scans || []}
               activeLocationId={activeLocationId}

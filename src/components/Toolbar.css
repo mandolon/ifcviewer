@@ -99,6 +99,22 @@
   color: white;
 }
 
+.toolbar-button.disabled,
+.toolbar-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: #2a2a2a;
+  border-color: #444;
+  color: #666;
+}
+
+.toolbar-button.disabled:hover,
+.toolbar-button:disabled:hover {
+  background: #2a2a2a;
+  border-color: #444;
+  transform: none;
+}
+
 .toolbar-button .icon {
   font-size: 14px;
   line-height: 1;
