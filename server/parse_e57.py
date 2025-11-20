@@ -228,6 +228,26 @@ def parse_e57_file(file_path):
         log_debug(f"Opened E57 file: {file_path}")
         log_debug(f"Scan count: {e57.scan_count}")
 
+        # DEBUG: Try to access raw E57 structure via pye57's root() method
+        try:
+            root = e57.root
+            log_debug(f"E57 root accessible: {type(root)}")
+            log_debug(f"Root attributes: {dir(root)}")
+
+            # Try to access images2D node
+            if hasattr(root, 'get'):
+                try:
+                    images2D = root.get("images2D")
+                    log_debug(f"Found images2D node: {images2D}")
+                except Exception as e:
+                    log_debug(f"No images2D node or error accessing it: {e}")
+
+            # List all children of root
+            if hasattr(root, 'children'):
+                log_debug(f"Root children: {root.children()}")
+        except Exception as raw_error:
+            log_debug(f"Could not access raw E57 structure: {raw_error}")
+
         # Detect source format
         source_format = detect_e57_source(e57)
         log_debug(f"Detected E57 source: {source_format}")

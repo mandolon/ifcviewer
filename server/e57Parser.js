@@ -24,8 +24,9 @@ export async function parseE57File(filePath, onProgress = () => {}) {
     console.log('Starting Python E57 parser...');
     onProgress(10);
 
-    // Spawn Python process
-    const pythonProcess = spawn('C:\\Users\\alope\\AppData\\Local\\Programs\\Python\\Python312\\python.exe', [pythonScript, filePath]);
+    // Spawn Python process (cross-platform)
+    const pythonCommand = process.platform === 'win32' ? 'python' : 'python3';
+    const pythonProcess = spawn(pythonCommand, [pythonScript, filePath]);
 
     let stdout = '';
     let stderr = '';
