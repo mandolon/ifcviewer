@@ -1,70 +1,303 @@
-# GitHub Codespaces ♥️ React
+# ReCap-Style Point Cloud + Panorama Viewer
 
-Welcome to your shiny new Codespace running React! We've got everything fired up and running for you to explore React.
+A web-based viewer for LiDAR point clouds and 360° panoramic images from Leica BLK360 scanners. This application provides an intuitive interface for viewing point cloud data alongside panoramic images from scan locations, with measurement tools and navigation features.
 
-You've got a blank canvas to work on from a git perspective as well. There's a single initial commit with the what you're seeing right now - where you go from here is up to you!
+![Point Cloud Panorama Viewer](docs/screenshot.png)
 
-Everything you do here is contained within this one codespace. There is no repository on GitHub yet. If and when you’re ready you can click "Publish Branch" and we’ll create your repository and push up your project. If you were just exploring then and have no further need for this code then you can simply delete your codespace and it's gone forever.
+## ✨ Features
 
-This project was bootstrapped for you with [Vite](https://vitejs.dev/).
+- **🗂️ E57 File Support**: Single-file upload containing point clouds, scan locations, and panoramic images
+- **☁️ Point Cloud Visualization**: View large point clouds with color-coded rendering
+- **📸 360° Panorama Viewer**: Navigate through panoramic images at each scan location
+- **📍 Interactive Hotspots**: Click on scan location markers to view corresponding panoramas
+- **📏 Measurement Tool**: Measure distances between two points in 3D space
+- **⚡ Split View**: View point cloud and panorama side-by-side
+- **🗺️ Location Sidebar**: Quick navigation between scan locations
+- **🎨 Sample Data Generator**: Test the viewer without real E57 files
 
-## Available Scripts
+## 🚀 Quick Start
 
-In the project directory, you can run:
+### Prerequisites
 
-### `npm start`
+- Node.js 16+ and npm
+- Modern web browser with WebGL support
 
-We've already run this for you in the `Codespaces: server` terminal window below. If you need to stop the server for any reason you can just run `npm start` again to bring it back online.
+### Installation
 
-Runs the app in the development mode.\
-Open [http://localhost:3000/](http://localhost:3000/) in the built-in Simple Browser (`Cmd/Ctrl + Shift + P > Simple Browser: Show`) to view your running application.
+```bash
+# Install dependencies
+npm install --legacy-peer-deps
 
-The page will reload automatically when you make changes.\
-You may also see any lint errors in the console.
+# Start development server
+npm start
 
-### `npm test`
+# Build for production
+npm run build
+```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+The application will be available at `http://localhost:3000`.
 
-### `npm run build`
+## 📖 Usage
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Method 1: Load E57 File
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+1. **Export from Leica Register 360:**
+   - Open your project
+   - Select **File → Export → E57**
+   - ✅ Check **"Include Images"**
+   - Export the .e57 file
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+2. **Upload to Viewer:**
+   - Open the viewer
+   - Click **"Browse Files"**
+   - Select your E57 file
+   - Wait for parsing (progress shown)
 
-## Learn More
+3. **Navigate:**
+   - **Point Cloud**: Drag to rotate, scroll to zoom, right-click to pan
+   - **Hotspots**: Click markers to switch locations
+   - **Sidebar**: Jump directly to any scan location
+   - **Measurement**: Enable in toolbar, click two points
 
-You can learn more in the [Vite documentation](https://vitejs.dev/guide/).
+### Method 2: Load Sample Data
 
-To learn Vitest, a Vite-native testing framework, go to [Vitest documentation](https://vitest.dev/guide/)
+For testing without a real E57 file:
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+1. Click **"Load Sample Data (for testing)"**
+2. Explore with generated point cloud and panoramas
 
-### Code Splitting
+## 🎮 Controls
 
-This section has moved here: [https://sambitsahoo.com/blog/vite-code-splitting-that-works.html](https://sambitsahoo.com/blog/vite-code-splitting-that-works.html)
+### Point Cloud View
+| Action | Control |
+|--------|---------|
+| Rotate camera | Left mouse drag |
+| Pan camera | Right mouse drag |
+| Zoom | Mouse scroll |
+| Select location | Click hotspot |
+| Measure point | Click (when measurement mode on) |
 
-### Analyzing the Bundle Size
+### Panorama View
+| Action | Control |
+|--------|---------|
+| Pan view | Mouse drag |
+| Zoom | Mouse scroll |
+| Reset view | Double-click |
 
-This section has moved here: [https://github.com/btd/rollup-plugin-visualizer#rollup-plugin-visualizer](https://github.com/btd/rollup-plugin-visualizer#rollup-plugin-visualizer)
+### Toolbar
+- **View Mode**: Split / Point Cloud Only / Panorama Only
+- **Measure**: Toggle measurement mode
+- **Clear**: Reset measurement
+- **👁 Icon**: Toggle hotspot visibility
 
-### Making a Progressive Web App
+## 📏 Measurement Tool
 
-This section has moved here: [https://dev.to/hamdankhan364/simplifying-progressive-web-app-pwa-development-with-vite-a-beginners-guide-38cf](https://dev.to/hamdankhan364/simplifying-progressive-web-app-pwa-development-with-vite-a-beginners-guide-38cf)
+1. Click **"Measure"** in toolbar (turns ON)
+2. Click first point in point cloud
+3. Click second point
+4. Distance displays in meters/centimeters
+5. Click **"Clear"** to reset
+6. Toggle measurement off when done
 
-### Advanced Configuration
+## 🏗️ Architecture
 
-This section has moved here: [https://vitejs.dev/guide/build.html#advanced-base-options](https://vitejs.dev/guide/build.html#advanced-base-options)
+### Component Structure
+```
+App
+├── PointCloudPanoramaViewer
+│   ├── FileUploadPanel        # E57 upload & parsing
+│   ├── Toolbar                # Controls & measurement
+│   ├── LocationSidebar        # Scan location list
+│   └── SplitViewContainer     # Layout manager
+│       ├── PointCloudView     # Three.js point cloud + hotspots
+│       └── PanoramaView       # Pannellum panorama viewer
+```
 
-### Deployment
+### Technology Stack
 
-This section has moved here: [https://vitejs.dev/guide/build.html](https://vitejs.dev/guide/build.html)
+| Technology | Purpose |
+|------------|---------|
+| **React 18** | UI framework |
+| **Three.js** | 3D graphics & point cloud rendering |
+| **Pannellum** | 360° panorama viewer |
+| **web-e57** | E57 file parser (WASM) |
+| **Vite** | Build tool & dev server |
 
-### Troubleshooting
+### Data Flow
 
-This section has moved here: [https://vitejs.dev/guide/troubleshooting.html](https://vitejs.dev/guide/troubleshooting.html)
+```
+E57 File Upload
+    ↓
+web-e57 Parser (WASM)
+    ↓
+Extract: Point Cloud + Metadata + Images
+    ↓
+State Management (React)
+    ↓
+Render: PointCloudView + PanoramaView
+    ↓
+User Interaction → Update Active Location
+    ↓
+Sync Point Cloud Hotspots ↔ Panorama Display
+```
+
+## 📁 E57 File Format
+
+E57 is a vendor-neutral format for 3D imaging data.
+
+### Expected Structure
+```
+/data3D/pointClouds[]/points   → XYZ coordinates, RGB colors
+/images2D/images[]             → Panoramic images
+  /pose/translation            → Position (X, Y, Z)
+  /pose/rotation               → Orientation (quaternion)
+  /guid                        → Unique ID
+  /name                        → Location name
+```
+
+## 🛠️ Development
+
+### Project Structure
+```
+src/
+├── components/              # React components
+│   ├── FileUploadPanel.jsx
+│   ├── PointCloudView.jsx
+│   ├── PanoramaView.jsx
+│   ├── LocationSidebar.jsx
+│   ├── Toolbar.jsx
+│   └── SplitViewContainer.jsx
+├── utils/                   # Utility functions
+│   ├── e57Parser.js        # E57 parsing logic
+│   └── sampleDataGenerator.js  # Test data
+├── App.jsx                  # Root component
+└── PointCloudPanoramaViewer.jsx  # Main viewer
+```
+
+### Key Utilities
+
+**E57 Parser** (`src/utils/e57Parser.js`)
+- Parses E57 binary format
+- Extracts point clouds, metadata, images
+- Converts quaternions → compass headings
+- Progress tracking
+
+**Sample Data Generator** (`src/utils/sampleDataGenerator.js`)
+- Generates test point clouds
+- Creates sample scan locations
+- Generates canvas-based panoramas
+
+## 🧪 Testing
+
+```bash
+# Run tests
+npm test
+
+# Build production bundle
+npm run build
+
+# Preview production build
+npm run preview
+```
+
+## 🌐 Browser Support
+
+| Browser | Support |
+|---------|---------|
+| Chrome/Edge | ✅ Full |
+| Firefox | ✅ Full |
+| Safari | ✅ Full (test WebGL) |
+| IE | ❌ Not supported |
+
+## ⚠️ Troubleshooting
+
+### E57 file won't parse
+- ✅ Ensure "Include Images" was checked during export
+- ✅ Verify file integrity (test in another E57 viewer)
+- ✅ Check browser console for errors
+- ✅ Try with sample data first
+
+### Point cloud not visible
+- Zoom out (scroll wheel)
+- Check file contains point cloud data
+- Verify WebGL is enabled
+- Try resetting camera position
+
+### Panoramas not loading
+- Ensure E57 includes image data
+- Check images have pose metadata
+- Look for console errors
+- Verify image format (JPEG/PNG)
+
+### Measurement not working
+- Enable measurement mode (toolbar button = ON)
+- Click directly on point cloud (not empty space)
+- Click on denser areas
+- Try with sample data first
+
+## 📊 Performance
+
+### Recommendations
+- **Point Cloud Size**: <500M points (decimate in Leica Register 360 if needed)
+- **File Size**: <2GB (browser memory limits)
+- **Images**: 2048x1024 panoramas (balance quality/performance)
+
+### Optimization Tips
+- Use LAZ compression in exports
+- Reduce point cloud density for faster loading
+- Close other browser tabs to free memory
+
+## 🗺️ Roadmap
+
+### ✅ Phase 1 (Complete)
+- E57 parsing
+- Point cloud rendering
+- Panorama viewer
+- Hotspot navigation
+- Measurement tool
+- Sample data
+
+### 🔜 Phase 2 (Planned)
+- Potree integration (better LOD)
+- Annotations & markup
+- Project save/load
+- Export measurements
+- Keyboard shortcuts
+
+### 💡 Future Ideas
+- Multi-page scan support (100+ locations)
+- Compass rose overlay
+- Camera animations
+- Point cloud filtering
+- VR support
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file
+
+## 🙏 Acknowledgments
+
+- **Three.js** - 3D graphics library
+- **Pannellum** - Panorama viewer
+- **web-e57** - E57 parser
+- **Leica BLK360** - Reference hardware
+
+## 🤝 Contributing
+
+Contributions welcome! Please:
+
+1. Fork the repository
+2. Create feature branch (`git checkout -b feature/amazing`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push branch (`git push origin feature/amazing`)
+5. Open Pull Request
+
+## 📞 Support
+
+- 🐛 [Report issues](https://github.com/yourusername/ifcviewer/issues)
+- 📖 Check troubleshooting section
+- 💬 Discussions tab for questions
+
+---
+
+**Note**: This is a viewing tool. For editing/processing, use professional software like Autodesk ReCap Pro or Leica Register 360.

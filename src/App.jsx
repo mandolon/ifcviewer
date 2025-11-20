@@ -1,10 +1,10 @@
 import './App.css';
-import IfcViewer from './IfcViewer';
+import PointCloudPanoramaViewer from './PointCloudPanoramaViewer';
 
 function App() {
   return (
     <div className="App" style={{ height: '100vh' }}>
-      <IfcViewer />
+      <PointCloudPanoramaViewer />
     </div>
   );
 }

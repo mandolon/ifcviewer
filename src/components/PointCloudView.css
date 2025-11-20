@@ -1,0 +1,44 @@
+.pointcloud-view {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  background: #1a1a1a;
+}
+
+.pointcloud-status {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 20px 30px;
+  background: rgba(42, 42, 42, 0.95);
+  border: 1px solid #555;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #e0e0e0;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.measurement-hint {
+  position: absolute;
+  top: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 20px;
+  background: rgba(243, 156, 18, 0.95);
+  border: 1px solid #f39c12;
+  border-radius: 6px;
+  font-size: 13px;
+  color: white;
+  font-weight: 500;
+  z-index: 10;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Cursor styles */
+.pointcloud-view.measurement-mode {
+  cursor: crosshair;
+}

@@ -9,12 +9,16 @@
     "@testing-library/user-event": "^14.4.3",
     "@thatopen/components": "3.2.6",
     "@thatopen/fragments": "3.2.6",
+    "laz-perf": "^0.0.7",
+    "pannellum": "^2.5.6",
+    "potree-core": "^2.0.11",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "web-vitals": "^3.1.0",
     "three": "^0.175.0",
+    "web-e57": "^1.2.0",
     "web-ifc": "latest",
-    "web-ifc-three": "latest"
+    "web-ifc-three": "latest",
+    "web-vitals": "^3.1.0"
   },
   "overrides": {
     "@svgr/webpack": "^8.0.1",
@@ -49,6 +53,8 @@
     "@vitejs/plugin-react": "^4.7.0",
     "jsdom": "^26.1.0",
     "vite": "^6.3.6",
+    "vite-plugin-top-level-await": "^1.6.0",
+    "vite-plugin-wasm": "^3.5.0",
     "vitest": "^3.0.7"
   }
 }

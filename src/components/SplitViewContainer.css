@@ -1,0 +1,51 @@
+.split-view-container {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.view-panel {
+  position: relative;
+  overflow: hidden;
+  background: #1a1a1a;
+}
+
+/* Split mode - 50/50 */
+.split-view-container.split .pointcloud-panel {
+  width: 50%;
+  border-right: 1px solid #444;
+}
+
+.split-view-container.split .panorama-panel {
+  width: 50%;
+}
+
+/* Point cloud only mode */
+.split-view-container.pointcloud-only .pointcloud-panel {
+  width: 100%;
+}
+
+/* Panorama only mode */
+.split-view-container.panorama-only .panorama-panel {
+  width: 100%;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .split-view-container.split {
+    flex-direction: column;
+  }
+
+  .split-view-container.split .pointcloud-panel {
+    width: 100%;
+    height: 50%;
+    border-right: none;
+    border-bottom: 1px solid #444;
+  }
+
+  .split-view-container.split .panorama-panel {
+    width: 100%;
+    height: 50%;
+  }
+}
