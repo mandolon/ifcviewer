@@ -11,6 +11,29 @@ Local Node.js server for robust E57 file parsing using Python's `pye57` library.
 - ✅ Faster processing for large files
 - ✅ Keeps all functionality: point clouds + panoramas + scan locations
 
+## Supported E57 Sources
+
+The parser **auto-detects** and supports E57 files from:
+
+### ✅ Leica Geosystems
+- **Leica Register 360** (BLK360, RTC360 scanners)
+- Exports with `visualReferenceRepresentation` for panoramic images
+- Quaternion-based rotation data
+- Full support for point clouds, scan poses, and panoramas
+
+### ✅ Autodesk ReCap
+- **ReCap Pro** (any scanner source: FARO, Leica, Z+F, etc.)
+- **RealView** panoramic images via `sphericalRepresentation`
+- Supports both quaternion and rotation matrix formats
+- Handles alternative image storage paths (`pinholeRepresentation`, `cylindricalRepresentation`)
+
+### ✅ Generic E57
+- Any E57-compliant scanner export
+- Fallback extraction paths for maximum compatibility
+- Detailed logging to help diagnose unsupported structures
+
+**Detection is automatic** - just upload any E57 file and the parser will identify the source and use appropriate extraction methods.
+
 ## Setup
 
 ### 1. Install Dependencies
