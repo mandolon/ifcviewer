@@ -137,15 +137,40 @@ export async function parseE57File(file, onProgress = () => {}) {
     // Convert E57 to JSON format using web-e57
     let result;
     try {
+      console.log('Starting E57 conversion...', {
+        fileSize: arrayBuffer.byteLength,
+        fileName: file.name
+      });
+
+      // Check if ArrayBuffer is valid
+      if (!arrayBuffer || arrayBuffer.byteLength === 0) {
+        throw new Error('Empty or invalid file buffer');
+      }
+
+      // Check E57 file signature (should start with "ASTM-E57")
+      const headerView = new Uint8Array(arrayBuffer, 0, Math.min(8, arrayBuffer.byteLength));
+      const headerString = String.fromCharCode(...headerView);
+      console.log('E57 file header:', headerString);
+
+      if (!headerString.startsWith('ASTM')) {
+        throw new Error('Invalid E57 file: Missing ASTM-E57 header. File may be corrupted or not a valid E57 file.');
+      }
+
       result = await convertE57(arrayBuffer, 'JSON');
 
       if (!result) {
         throw new Error('Conversion returned no data. The E57 file may be empty or corrupted.');
       }
 
+      console.log('E57 conversion successful');
       onProgress(50);
     } catch (conversionError) {
       console.error('E57 conversion error:', conversionError);
+      console.error('Error details:', {
+        name: conversionError?.name,
+        message: conversionError?.message,
+        stack: conversionError?.stack
+      });
 
       // Provide more specific error message
       const errorMsg = conversionError?.message || 'Unknown error during conversion';
@@ -154,11 +179,32 @@ export async function parseE57File(file, onProgress = () => {}) {
         throw new Error(`WASM module error: The E57 parser failed to initialize. Try refreshing the page.`);
       }
 
-      if (!conversionError || errorMsg === 'undefined' || errorMsg === '') {
-        throw new Error(`E57 parsing library error: The file could not be processed. This may be due to:\n• Incompatible E57 format\n• Corrupted file\n• Unsupported E57 features\n\nAlternative: Export point cloud as LAS/LAZ and use a manual file upload viewer instead.`);
+      if (errorMsg.includes('header') || errorMsg.includes('ASTM')) {
+        throw new Error(`Invalid E57 file format: The file does not appear to be a valid E57 file. Please ensure:\n• File was exported correctly from Leica Register 360\n• File is not corrupted\n• File extension is .e57`);
       }
 
-      throw new Error(`Failed to convert E57 file: ${errorMsg}. The file may be corrupted or use an unsupported E57 variant.`);
+      // Known web-e57 limitations
+      if (!conversionError || errorMsg === 'undefined' || errorMsg === '' || errorMsg === 'Unknown error during conversion') {
+        throw new Error(`E57 parsing library error: The web-e57 library cannot process this file.
+
+This is a known limitation. The web-e57 library (used for browser-based E57 parsing) has limited support for E57 variants and may not work with all E57 files exported from Leica Register 360.
+
+Recommended solutions:
+1. Try re-exporting from Leica Register 360 with different settings:
+   • Use "E57 v1.0" format if available
+   • Try without compression
+   • Ensure "Include Images" is checked
+
+2. Use sample data in this viewer to test functionality
+
+3. For production use, consider server-side processing with more robust E57 parsers (libe57format, libE57Format)
+
+4. Alternative: Export as LAS/LAZ format which has better browser support
+
+Technical note: web-e57 is a WASM-based E57 parser with limited feature support. Some E57 features (compressed point data, certain image formats, extended attributes) may not be supported.`);
+      }
+
+      throw new Error(`Failed to convert E57 file: ${errorMsg}. The file may use E57 features not supported by the web-e57 library.`);
     }
 
     // Parse the JSON result
