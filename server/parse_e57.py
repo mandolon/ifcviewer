@@ -280,6 +280,9 @@ def extract_point_cloud(e57, source_format):
             header = e57.get_header(scan_index)
             data = e57.read_scan(scan_index, ignore_missing_fields=True)
 
+            # DEBUG: Log available data fields
+            log_debug(f"  Scan {scan_index} data fields: {list(data.keys())}")
+
             # Extract XYZ coordinates (standard across all E57 files)
             if 'cartesianX' in data and 'cartesianY' in data and 'cartesianZ' in data:
                 x = data['cartesianX']
@@ -291,15 +294,24 @@ def extract_point_cloud(e57, source_format):
                 positions.extend(points.flatten().tolist())
 
                 # Extract RGB colors if available
-                if 'colorRed' in data and 'colorGreen' in data and 'colorBlue' in data:
+                has_color = 'colorRed' in data and 'colorGreen' in data and 'colorBlue' in data
+                log_debug(f"  Scan {scan_index}: {len(x)} points, has_color={has_color}")
+
+                if has_color:
                     r = data['colorRed'] / 255.0
                     g = data['colorGreen'] / 255.0
                     b = data['colorBlue'] / 255.0
 
                     point_colors = np.column_stack((r, g, b))
                     colors.extend(point_colors.flatten().tolist())
-
-                log_debug(f"  Scan {scan_index}: {len(x)} points")
+                    log_debug(f"    ✓ Extracted RGB colors for {len(x)} points")
+                else:
+                    log_debug(f"    ✗ No RGB color data (colorRed/colorGreen/colorBlue not in data)")
+                    # Check for alternative color fields
+                    if 'intensity' in data:
+                        log_debug(f"    ℹ Has intensity data (could use for grayscale)")
+                    if 'nor_x' in data:
+                        log_debug(f"    ℹ Has normal data (could use for coloring)")
 
         except Exception as e:
             log_debug(f"Warning: Error reading scan {scan_index}: {e}")
