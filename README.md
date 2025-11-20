@@ -1,13 +1,27 @@
-# ReCap-Style Point Cloud + Panorama Viewer
+# 3D Viewer Suite
 
-A web-based viewer for LiDAR point clouds and 360° panoramic images from Leica BLK360 scanners. This application provides an intuitive interface for viewing point cloud data alongside panoramic images from scan locations, with measurement tools and navigation features.
+A comprehensive web-based application featuring two professional 3D viewers:
+1. **IFC Viewer**: For Building Information Models (BIM)
+2. **Point Cloud + Panorama Viewer**: For LiDAR scans and 360° imagery
 
-![Point Cloud Panorama Viewer](docs/screenshot.png)
+![3D Viewer Suite](docs/screenshot.png)
 
 ## ✨ Features
 
-- **🗂️ E57 File Support**: Single-file upload containing point clouds, scan locations, and panoramic images
-- **☁️ Point Cloud Visualization**: View large point clouds with color-coded rendering
+### 🏠 Landing Page
+- **Dual Viewer Selection**: Choose between IFC or Point Cloud viewers
+- **Professional Interface**: Card-based selection with clear descriptions
+- **Back Navigation**: Easy return to home from any viewer
+
+### 🏗️ IFC Viewer
+- **📦 IFC File Support**: Load Industry Foundation Classes building models
+- **🏛️ 3D BIM Visualization**: View architectural and structural elements
+- **🔄 Orbit Controls**: Navigate and inspect building components
+- **📐 Model Exploration**: Interactive 3D building viewing
+
+### ☁️ Point Cloud + Panorama Viewer
+- **🗂️ E57 File Support**: Single-file upload with point clouds, scan locations, and images
+- **☁️ Point Cloud Visualization**: View large LiDAR point clouds with color-coded rendering
 - **📸 360° Panorama Viewer**: Navigate through panoramic images at each scan location
 - **📍 Interactive Hotspots**: Click on scan location markers to view corresponding panoramas
 - **📏 Measurement Tool**: Measure distances between two points in 3D space
@@ -39,32 +53,50 @@ The application will be available at `http://localhost:3000`.
 
 ## 📖 Usage
 
-### Method 1: Load E57 File
+### Getting Started
 
-1. **Export from Leica Register 360:**
+When you open the application, you'll see the landing page with two options:
+
+1. **IFC Viewer**: For viewing BIM/architectural models (.ifc files)
+2. **Point Cloud + Panorama Viewer**: For LiDAR scans (.e57 files)
+
+Click the viewer you want to use. You can return to the landing page at any time using the "← Back to Home" button.
+
+### Using the IFC Viewer
+
+1. Click **"Open IFC Viewer"** on the landing page
+2. Click **"Select IFC file"** in the viewer
+3. Choose your .ifc file (Industry Foundation Classes)
+4. Navigate the 3D model:
+   - **Left drag**: Rotate view
+   - **Scroll**: Zoom in/out
+   - **Right drag**: Pan camera
+
+### Using the Point Cloud + Panorama Viewer
+
+#### Method 1: Load E57 File
+
+1. Click **"Open Point Cloud Viewer"** on the landing page
+2. **Export from Leica Register 360:**
    - Open your project
    - Select **File → Export → E57**
    - ✅ Check **"Include Images"**
    - Export the .e57 file
-
-2. **Upload to Viewer:**
-   - Open the viewer
+3. **Upload to Viewer:**
    - Click **"Browse Files"**
    - Select your E57 file
    - Wait for parsing (progress shown)
-
-3. **Navigate:**
+4. **Navigate:**
    - **Point Cloud**: Drag to rotate, scroll to zoom, right-click to pan
    - **Hotspots**: Click markers to switch locations
    - **Sidebar**: Jump directly to any scan location
    - **Measurement**: Enable in toolbar, click two points
 
-### Method 2: Load Sample Data
+#### Method 2: Load Sample Data (Testing)
 
-For testing without a real E57 file:
-
-1. Click **"Load Sample Data (for testing)"**
-2. Explore with generated point cloud and panoramas
+1. Click **"Open Point Cloud Viewer"** on the landing page
+2. Click **"Load Sample Data (for testing)"**
+3. Explore with generated point cloud and panoramas
 
 ## 🎮 Controls
 
@@ -103,14 +135,17 @@ For testing without a real E57 file:
 
 ### Component Structure
 ```
-App
-├── PointCloudPanoramaViewer
-│   ├── FileUploadPanel        # E57 upload & parsing
-│   ├── Toolbar                # Controls & measurement
-│   ├── LocationSidebar        # Scan location list
-│   └── SplitViewContainer     # Layout manager
-│       ├── PointCloudView     # Three.js point cloud + hotspots
-│       └── PanoramaView       # Pannellum panorama viewer
+App (Viewer Selection)
+├── LandingPage               # Viewer selection interface
+├── IfcViewer                 # IFC/BIM viewer
+│   └── Three.js scene with IFC loader
+└── PointCloudPanoramaViewer  # Point cloud + panorama viewer
+    ├── FileUploadPanel       # E57 upload & parsing
+    ├── Toolbar               # Controls & measurement
+    ├── LocationSidebar       # Scan location list
+    └── SplitViewContainer    # Layout manager
+        ├── PointCloudView    # Three.js point cloud + hotspots
+        └── PanoramaView      # Pannellum panorama viewer
 ```
 
 ### Technology Stack
