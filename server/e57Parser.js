@@ -24,15 +24,8 @@ export async function parseE57File(filePath, onProgress = () => {}) {
     console.log('Starting Python E57 parser...');
     onProgress(10);
 
-    // Spawn Python process (cross-platform)
-    // Windows: try 'py' first (Python launcher), then 'python', then 'python3'
-    // Linux/Mac: try 'python3' first, then 'python'
-    let pythonCommand;
-    if (process.platform === 'win32') {
-      pythonCommand = 'py';  // Python launcher is most reliable on Windows
-    } else {
-      pythonCommand = 'python3';
-    }
+    // Use Python 3.12 directly (known working installation)
+    const pythonCommand = 'C:\\Users\\alope\\AppData\\Local\\Programs\\Python\\Python312\\python.exe';
 
     console.log(`Using Python command: ${pythonCommand}`);
     const pythonProcess = spawn(pythonCommand, [pythonScript, filePath]);
