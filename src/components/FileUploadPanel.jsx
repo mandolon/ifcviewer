@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './FileUploadPanel.css';
 import { parseE57File, validateE57File, validateFileSize } from '../utils/e57Parser';
+import { isServerAvailable, parseE57FileOnServer } from '../utils/serverE57Parser';
 import { generateSampleProjectData } from '../utils/sampleDataGenerator';
 
 export default function FileUploadPanel({
@@ -16,6 +17,21 @@ export default function FileUploadPanel({
   const [isLoadingFile, setIsLoadingFile] = useState(false);
   const [isLoadingSample, setIsLoadingSample] = useState(false);
   const [fileSizeWarning, setFileSizeWarning] = useState(null);
+  const [serverAvailable, setServerAvailable] = useState(null); // null = checking, true/false = result
+
+  // Check if server is available on component mount
+  useEffect(() => {
+    const checkServer = async () => {
+      const available = await isServerAvailable();
+      setServerAvailable(available);
+      if (available) {
+        console.log('✅ Server-side E57 processing available (localhost:3001)');
+      } else {
+        console.log('⚠️ Server-side E57 processing not available, using browser-based parsing');
+      }
+    };
+    checkServer();
+  }, []);
 
   const handleE57Upload = async (e) => {
     const file = e.target.files?.[0];
@@ -51,27 +67,74 @@ export default function FileUploadPanel({
       console.log('Starting E57 file parsing...', {
         name: file.name,
         size: file.size,
-        type: file.type
+        type: file.type,
+        useServer: serverAvailable
       });
 
-      // Parse E57 file
-      const result = await parseE57File(file, (progress) => {
-        setParsingProgress(progress);
+      let result;
 
-        if (progress < 20) {
-          setParsingStatus('Reading E57 file...');
-        } else if (progress < 30) {
-          setParsingStatus('Processing file chunks...');
-        } else if (progress < 60) {
-          setParsingStatus('Converting E57 format (this may take a while)...');
-        } else if (progress < 80) {
-          setParsingStatus('Extracting point cloud...');
-        } else if (progress < 95) {
-          setParsingStatus('Extracting panoramic images...');
-        } else {
-          setParsingStatus('Finalizing...');
+      // Try server-side parsing first if available
+      if (serverAvailable) {
+        try {
+          setParsingStatus('Uploading to server for processing...');
+          result = await parseE57FileOnServer(file, (progress) => {
+            setParsingProgress(progress);
+
+            if (progress < 15) {
+              setParsingStatus('Uploading to server...');
+            } else if (progress < 30) {
+              setParsingStatus('Server: Reading E57 file...');
+            } else if (progress < 60) {
+              setParsingStatus('Server: Extracting point cloud data...');
+            } else if (progress < 90) {
+              setParsingStatus('Server: Extracting panoramic images...');
+            } else {
+              setParsingStatus('Server: Finalizing...');
+            }
+          });
+          console.log('✅ Server-side parsing successful');
+        } catch (serverError) {
+          console.warn('Server parsing failed, falling back to browser:', serverError.message);
+          setParsingStatus('Server failed, using browser parsing...');
+          // Fall back to browser-based parsing
+          result = await parseE57File(file, (progress) => {
+            setParsingProgress(progress);
+
+            if (progress < 20) {
+              setParsingStatus('Reading E57 file...');
+            } else if (progress < 30) {
+              setParsingStatus('Processing file chunks...');
+            } else if (progress < 60) {
+              setParsingStatus('Converting E57 format (this may take a while)...');
+            } else if (progress < 80) {
+              setParsingStatus('Extracting point cloud...');
+            } else if (progress < 95) {
+              setParsingStatus('Extracting panoramic images...');
+            } else {
+              setParsingStatus('Finalizing...');
+            }
+          });
         }
-      });
+      } else {
+        // Use browser-based parsing
+        result = await parseE57File(file, (progress) => {
+          setParsingProgress(progress);
+
+          if (progress < 20) {
+            setParsingStatus('Reading E57 file...');
+          } else if (progress < 30) {
+            setParsingStatus('Processing file chunks...');
+          } else if (progress < 60) {
+            setParsingStatus('Converting E57 format (this may take a while)...');
+          } else if (progress < 80) {
+            setParsingStatus('Extracting point cloud...');
+          } else if (progress < 95) {
+            setParsingStatus('Extracting panoramic images...');
+          } else {
+            setParsingStatus('Finalizing...');
+          }
+        });
+      }
 
       setParsingStatus('Processing complete!');
 
@@ -133,6 +196,18 @@ export default function FileUploadPanel({
         <p className="upload-subtitle">
           Upload your Leica BLK360 E57 file to automatically extract point clouds, scan locations, and panoramic images
         </p>
+
+        {serverAvailable === true && (
+          <div className="server-status server-online">
+            <strong>✓ Server-Side Processing Active</strong> - Using local E57 parser (supports larger files and all E57 variants)
+          </div>
+        )}
+
+        {serverAvailable === false && (
+          <div className="server-status server-offline">
+            <strong>⚠ Browser-Based Processing Only</strong> - Limited E57 support. Start server with: <code>cd server && npm start</code>
+          </div>
+        )}
 
         {error && (
           <div className="upload-error">
