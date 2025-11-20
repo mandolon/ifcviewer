@@ -247,10 +247,35 @@ npm run preview
 ## ⚠️ Troubleshooting
 
 ### E57 file won't parse
-- ✅ Ensure "Include Images" was checked during export
-- ✅ Verify file integrity (test in another E57 viewer)
-- ✅ Check browser console for errors
-- ✅ Try with sample data first
+
+**Known Limitation**: The web-e57 library (browser-based E57 parser) has **limited support** for E57 variants and may not work with all E57 files exported from Leica Register 360. Some files will parse successfully, others will fail with "Unknown error during conversion."
+
+**If you encounter parsing errors:**
+
+1. **Try re-exporting with different settings:**
+   - Use "E57 v1.0" format if available
+   - Disable compression in export settings
+   - Ensure "Include Images" is checked
+   - Try exporting a smaller subset of scans
+
+2. **Test the viewer functionality:**
+   - Click "Load Sample Data" to verify the viewer works
+   - This confirms the issue is with E57 parsing, not the viewer
+
+3. **Alternative format (recommended for production):**
+   - Export as **LAS/LAZ** format (better browser support)
+   - Use a different point cloud viewer that supports LAS/LAZ
+
+4. **For production deployments:**
+   - Implement server-side E57 processing with robust parsers (libe57format, libE57Format)
+   - Convert E57 to web-friendly formats (Potree octree, LAZ) on the server
+   - Stream converted data to browser viewer
+
+**Additional checks:**
+- ✅ Verify file integrity (test in CloudCompare or Autodesk ReCap)
+- ✅ Check browser console for specific error messages
+- ✅ Ensure file size is under 2GB
+- ✅ Try with a different E57 file to isolate the issue
 
 ### Point cloud not visible
 - Zoom out (scroll wheel)
