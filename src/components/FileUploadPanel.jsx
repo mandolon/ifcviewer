@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import './FileUploadPanel.css';
-import { parseE57File, validateE57File } from '../utils/e57Parser';
+import { parseE57File, validateE57File, validateFileSize } from '../utils/e57Parser';
 import { generateSampleProjectData } from '../utils/sampleDataGenerator';
 
 export default function FileUploadPanel({
@@ -15,15 +15,31 @@ export default function FileUploadPanel({
   const [parsingStatus, setParsingStatus] = useState('');
   const [isLoadingFile, setIsLoadingFile] = useState(false);
   const [isLoadingSample, setIsLoadingSample] = useState(false);
+  const [fileSizeWarning, setFileSizeWarning] = useState(null);
 
   const handleE57Upload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file
+    // Reset warnings
+    setFileSizeWarning(null);
+
+    // Validate file extension
     if (!validateE57File(file)) {
       onError('Please select a valid E57 file');
       return;
+    }
+
+    // Validate file size
+    const sizeValidation = validateFileSize(file);
+    if (!sizeValidation.valid) {
+      onError(sizeValidation.error);
+      return;
+    }
+
+    // Show warning for large files
+    if (sizeValidation.warning) {
+      setFileSizeWarning(sizeValidation.warning);
     }
 
     setE57File(file);
@@ -32,14 +48,22 @@ export default function FileUploadPanel({
     setParsingStatus('Starting E57 parsing...');
 
     try {
+      console.log('Starting E57 file parsing...', {
+        name: file.name,
+        size: file.size,
+        type: file.type
+      });
+
       // Parse E57 file
       const result = await parseE57File(file, (progress) => {
         setParsingProgress(progress);
 
-        if (progress < 30) {
+        if (progress < 20) {
           setParsingStatus('Reading E57 file...');
+        } else if (progress < 30) {
+          setParsingStatus('Processing file chunks...');
         } else if (progress < 60) {
-          setParsingStatus('Converting E57 format...');
+          setParsingStatus('Converting E57 format (this may take a while)...');
         } else if (progress < 80) {
           setParsingStatus('Extracting point cloud...');
         } else if (progress < 95) {
@@ -113,6 +137,12 @@ export default function FileUploadPanel({
         {error && (
           <div className="upload-error">
             <strong>Error:</strong> {error}
+          </div>
+        )}
+
+        {fileSizeWarning && (
+          <div className="upload-warning">
+            <strong>⚠ Warning:</strong> {fileSizeWarning}
           </div>
         )}
 
@@ -205,6 +235,14 @@ export default function FileUploadPanel({
           </ol>
           <div className="help-note">
             <strong>Note:</strong> E57 files contain point clouds, scan locations, and panoramic images in a single file.
+          </div>
+          <div className="help-note help-note-warning">
+            <strong>⚠ File Size Limits:</strong> Browser memory limits restrict file processing to <strong>2GB maximum</strong>. Files larger than 500MB may fail or take several minutes to process. If your file is too large:
+            <ul>
+              <li>Reduce point cloud density in Leica Register 360</li>
+              <li>Export fewer scans per file</li>
+              <li>Use point cloud decimation/downsampling</li>
+            </ul>
           </div>
         </div>
       </div>

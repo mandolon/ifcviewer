@@ -5,6 +5,37 @@
 
 import { convertE57 } from 'web-e57';
 
+// File size limits (in bytes)
+const MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024; // 2GB hard limit
+const WARNING_FILE_SIZE = 500 * 1024 * 1024; // 500MB warning threshold
+
+/**
+ * Validate file size before processing
+ * @param {File} file - The file to validate
+ * @returns {Object} Validation result with status and message
+ */
+export function validateFileSize(file) {
+  if (!file) {
+    return { valid: false, error: 'No file provided' };
+  }
+
+  if (file.size > MAX_FILE_SIZE) {
+    return {
+      valid: false,
+      error: `File size (${(file.size / 1024 / 1024 / 1024).toFixed(2)} GB) exceeds maximum limit of 2GB. Please use a smaller file or decimate the point cloud in Leica Register 360.`
+    };
+  }
+
+  if (file.size > WARNING_FILE_SIZE) {
+    return {
+      valid: true,
+      warning: `Large file detected (${(file.size / 1024 / 1024).toFixed(0)} MB). Processing may take several minutes and could fail due to browser memory limits. Consider using a smaller file.`
+    };
+  }
+
+  return { valid: true };
+}
+
 /**
  * Convert quaternion rotation to compass heading (yaw angle in degrees)
  * @param {Object} quaternion - Quaternion object with x, y, z, w components
@@ -35,6 +66,41 @@ function quaternionToCompassHeading(quaternion) {
 }
 
 /**
+ * Read file in chunks to avoid memory issues with large files
+ * @param {File} file - The file to read
+ * @param {Function} onProgress - Progress callback
+ * @returns {Promise<ArrayBuffer>} File contents as ArrayBuffer
+ */
+async function readFileInChunks(file, onProgress = () => {}) {
+  const chunkSize = 64 * 1024 * 1024; // 64MB chunks
+  const chunks = [];
+  let offset = 0;
+
+  while (offset < file.size) {
+    const chunk = file.slice(offset, offset + chunkSize);
+    const arrayBuffer = await chunk.arrayBuffer();
+    chunks.push(arrayBuffer);
+    offset += chunkSize;
+
+    // Report progress (first 15% is for reading the file)
+    const progress = Math.min(15, (offset / file.size) * 15);
+    onProgress(progress);
+  }
+
+  // Combine all chunks into a single ArrayBuffer
+  const totalLength = chunks.reduce((sum, chunk) => sum + chunk.byteLength, 0);
+  const result = new Uint8Array(totalLength);
+  let position = 0;
+
+  for (const chunk of chunks) {
+    result.set(new Uint8Array(chunk), position);
+    position += chunk.byteLength;
+  }
+
+  return result.buffer;
+}
+
+/**
  * Parse E57 file and extract all necessary data
  * @param {File} file - The E57 file to parse
  * @param {Function} onProgress - Progress callback (0-100)
@@ -42,16 +108,58 @@ function quaternionToCompassHeading(quaternion) {
  */
 export async function parseE57File(file, onProgress = () => {}) {
   try {
-    onProgress(10);
+    onProgress(5);
 
-    // Read file as ArrayBuffer
-    const arrayBuffer = await file.arrayBuffer();
-    onProgress(20);
+    // Validate file size first
+    const sizeValidation = validateFileSize(file);
+    if (!sizeValidation.valid) {
+      throw new Error(sizeValidation.error);
+    }
+
+    // Read file in chunks to avoid memory issues
+    let arrayBuffer;
+    try {
+      if (file.size > 100 * 1024 * 1024) { // > 100MB, use chunked reading
+        arrayBuffer = await readFileInChunks(file, (progress) => {
+          onProgress(5 + progress); // 5-20% for file reading
+        });
+        onProgress(20);
+      } else {
+        // Small files can be read directly
+        arrayBuffer = await file.arrayBuffer();
+        onProgress(20);
+      }
+    } catch (readError) {
+      console.error('File read error:', readError);
+      throw new Error(`Failed to read file: ${readError.message}. The file may be too large for browser memory. Try using a file smaller than 2GB.`);
+    }
 
     // Convert E57 to JSON format using web-e57
-    // This library can convert E57 to various formats
-    const result = await convertE57(arrayBuffer, 'JSON');
-    onProgress(50);
+    let result;
+    try {
+      result = await convertE57(arrayBuffer, 'JSON');
+
+      if (!result) {
+        throw new Error('Conversion returned no data. The E57 file may be empty or corrupted.');
+      }
+
+      onProgress(50);
+    } catch (conversionError) {
+      console.error('E57 conversion error:', conversionError);
+
+      // Provide more specific error message
+      const errorMsg = conversionError?.message || 'Unknown error during conversion';
+
+      if (errorMsg.includes('WASM') || errorMsg.includes('wasm')) {
+        throw new Error(`WASM module error: The E57 parser failed to initialize. Try refreshing the page.`);
+      }
+
+      if (!conversionError || errorMsg === 'undefined' || errorMsg === '') {
+        throw new Error(`E57 parsing library error: The file could not be processed. This may be due to:\n• Incompatible E57 format\n• Corrupted file\n• Unsupported E57 features\n\nAlternative: Export point cloud as LAS/LAZ and use a manual file upload viewer instead.`);
+      }
+
+      throw new Error(`Failed to convert E57 file: ${errorMsg}. The file may be corrupted or use an unsupported E57 variant.`);
+    }
 
     // Parse the JSON result
     const e57Data = typeof result === 'string' ? JSON.parse(result) : result;
@@ -78,7 +186,13 @@ export async function parseE57File(file, onProgress = () => {}) {
     };
   } catch (error) {
     console.error('Error parsing E57 file:', error);
-    throw new Error(`Failed to parse E57 file: ${error.message}`);
+
+    // Provide more helpful error messages
+    if (error.message.includes('memory') || error.message.includes('allocation')) {
+      throw new Error(`Out of memory: The file is too large to process in your browser. Please reduce the point cloud size in Leica Register 360 or use a file smaller than 2GB.`);
+    }
+
+    throw new Error(error.message || 'Failed to parse E57 file');
   }
 }
 

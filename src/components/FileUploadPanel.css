@@ -38,8 +38,23 @@
   color: white;
   padding: 15px;
   border-radius: 8px;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
   font-size: 14px;
+  border-left: 4px solid #c92a2a;
+}
+
+.upload-warning {
+  background: #fff3cd;
+  color: #856404;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  border-left: 4px solid #ffc107;
+}
+
+.upload-warning strong {
+  color: #856404;
 }
 
 .upload-main {
@@ -265,6 +280,25 @@
   font-size: 13px;
   color: #ccc;
   line-height: 1.5;
+}
+
+.help-note-warning {
+  background: #3a3020;
+  border-left-color: #ffc107;
+}
+
+.help-note-warning strong {
+  color: #ffdb58;
+}
+
+.help-note ul {
+  margin: 10px 0 0 0;
+  padding-left: 20px;
+}
+
+.help-note li {
+  margin-bottom: 5px;
+  font-size: 12px;
 }
 
 /* Sample Data Button */
