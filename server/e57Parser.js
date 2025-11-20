@@ -25,7 +25,16 @@ export async function parseE57File(filePath, onProgress = () => {}) {
     onProgress(10);
 
     // Spawn Python process (cross-platform)
-    const pythonCommand = process.platform === 'win32' ? 'python' : 'python3';
+    // Windows: try 'py' first (Python launcher), then 'python', then 'python3'
+    // Linux/Mac: try 'python3' first, then 'python'
+    let pythonCommand;
+    if (process.platform === 'win32') {
+      pythonCommand = 'py';  // Python launcher is most reliable on Windows
+    } else {
+      pythonCommand = 'python3';
+    }
+
+    console.log(`Using Python command: ${pythonCommand}`);
     const pythonProcess = spawn(pythonCommand, [pythonScript, filePath]);
 
     let stdout = '';
@@ -74,7 +83,23 @@ export async function parseE57File(filePath, onProgress = () => {}) {
     });
 
     pythonProcess.on('error', (error) => {
-      reject(new Error(`Failed to start Python process: ${error.message}. Make sure Python 3 and pye57 are installed.`));
+      let errorMsg = `Failed to start Python process: ${error.message}\n\n`;
+
+      if (process.platform === 'win32') {
+        errorMsg += 'Python not found on Windows. Please:\n';
+        errorMsg += '1. Install Python 3 from https://www.python.org/downloads/\n';
+        errorMsg += '2. Check "Add Python to PATH" during installation\n';
+        errorMsg += '3. Or install via Microsoft Store\n';
+        errorMsg += '4. Restart your terminal/server after installation\n';
+        errorMsg += '5. Install dependencies: py -m pip install pye57 numpy';
+      } else {
+        errorMsg += 'Python not found. Please install Python 3:\n';
+        errorMsg += '- Ubuntu/Debian: sudo apt-get install python3 python3-pip\n';
+        errorMsg += '- macOS: brew install python3\n';
+        errorMsg += 'Then install dependencies: pip3 install pye57 numpy';
+      }
+
+      reject(new Error(errorMsg));
     });
   });
 }

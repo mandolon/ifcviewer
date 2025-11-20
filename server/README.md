@@ -39,6 +39,21 @@ The parser **auto-detects** and supports E57 files from:
 ### 1. Install Dependencies
 
 **Python (required for E57 parsing):**
+
+**Windows:**
+```bash
+# Check if Python is installed
+py --version
+
+# If not installed, download from https://www.python.org/downloads/
+# OR install from Microsoft Store
+# IMPORTANT: Check "Add Python to PATH" during installation
+
+# Install pye57 and numpy
+py -m pip install pye57 numpy
+```
+
+**Linux/macOS:**
 ```bash
 # Install Python 3 if not already installed
 python3 --version
