@@ -422,49 +422,100 @@ def extract_image_from_scan(e57, scan_index, header, source_format):
         bytes: Image data (JPEG or PNG) or None
     """
 
+    log_debug(f"  === Debugging image extraction for scan {scan_index} ===")
+
+    # DEBUG: Log all available keys in header
+    log_debug(f"  Header keys: {list(header.keys())}")
+
+    # DEBUG: Log header structure
+    for key, value in header.items():
+        if isinstance(value, dict):
+            log_debug(f"  Header['{key}'] is dict with keys: {list(value.keys())}")
+        elif isinstance(value, (bytes, bytearray)):
+            log_debug(f"  Header['{key}'] is bytes, length: {len(value)}")
+        else:
+            log_debug(f"  Header['{key}'] type: {type(value).__name__}")
+
     # Strategy: Try all known paths, return first successful extraction
 
     extraction_paths = []
 
     # Path 1: Leica visualReferenceRepresentation (most common for BLK360/RTC360)
     if 'visualReferenceRepresentation' in header:
+        log_debug(f"  ✓ Found visualReferenceRepresentation")
         extraction_paths.append(('visualReferenceRepresentation', header['visualReferenceRepresentation']))
+    else:
+        log_debug(f"  ✗ No visualReferenceRepresentation")
 
     # Path 2: ReCap sphericalRepresentation (RealView panoramas)
     if 'sphericalRepresentation' in header:
+        log_debug(f"  ✓ Found sphericalRepresentation")
         extraction_paths.append(('sphericalRepresentation', header['sphericalRepresentation']))
+    else:
+        log_debug(f"  ✗ No sphericalRepresentation")
 
     # Path 3: Generic pinholeRepresentation
     if 'pinholeRepresentation' in header:
+        log_debug(f"  ✓ Found pinholeRepresentation")
         extraction_paths.append(('pinholeRepresentation', header['pinholeRepresentation']))
+    else:
+        log_debug(f"  ✗ No pinholeRepresentation")
 
     # Path 4: cylindricalRepresentation (some scanners)
     if 'cylindricalRepresentation' in header:
+        log_debug(f"  ✓ Found cylindricalRepresentation")
         extraction_paths.append(('cylindricalRepresentation', header['cylindricalRepresentation']))
+    else:
+        log_debug(f"  ✗ No cylindricalRepresentation")
+
+    log_debug(f"  Found {len(extraction_paths)} potential image path(s)")
 
     # Try each path
     for path_name, img_repr in extraction_paths:
         try:
+            log_debug(f"    Trying {path_name}...")
+
+            # DEBUG: Log what's in this representation
+            if isinstance(img_repr, dict):
+                log_debug(f"      Keys in {path_name}: {list(img_repr.keys())}")
+
             # Try JPEG first (most common)
             if 'jpegImage' in img_repr:
-                log_debug(f"    Found image via {path_name}.jpegImage")
-                return img_repr['jpegImage']
+                img_data = img_repr['jpegImage']
+                if isinstance(img_data, (bytes, bytearray)) and len(img_data) > 0:
+                    log_debug(f"      ✓ Found valid jpegImage ({len(img_data)} bytes)")
+                    return img_data
+                else:
+                    log_debug(f"      ✗ jpegImage exists but invalid: type={type(img_data)}, len={len(img_data) if hasattr(img_data, '__len__') else 'N/A'}")
 
             # Try PNG
             if 'pngImage' in img_repr:
-                log_debug(f"    Found image via {path_name}.pngImage")
-                return img_repr['pngImage']
+                img_data = img_repr['pngImage']
+                if isinstance(img_data, (bytes, bytearray)) and len(img_data) > 0:
+                    log_debug(f"      ✓ Found valid pngImage ({len(img_data)} bytes)")
+                    return img_data
+                else:
+                    log_debug(f"      ✗ pngImage exists but invalid")
 
             # Try generic 'imageData' field (some E57 variants)
             if 'imageData' in img_repr:
-                log_debug(f"    Found image via {path_name}.imageData")
-                return img_repr['imageData']
+                img_data = img_repr['imageData']
+                if isinstance(img_data, (bytes, bytearray)) and len(img_data) > 0:
+                    log_debug(f"      ✓ Found valid imageData ({len(img_data)} bytes)")
+                    return img_data
+                else:
+                    log_debug(f"      ✗ imageData exists but invalid")
+
+            log_debug(f"      ✗ No valid image fields in {path_name}")
 
         except Exception as e:
-            log_debug(f"    Failed to extract from {path_name}: {e}")
+            log_debug(f"      ✗ Exception extracting from {path_name}: {e}")
+            import traceback
+            log_debug(f"      Traceback: {traceback.format_exc()}")
             continue
 
     # No image found via any path
+    log_debug(f"  === No image extracted for scan {scan_index} ===")
     return None
 
 
