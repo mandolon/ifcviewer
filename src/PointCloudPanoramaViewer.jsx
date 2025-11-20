@@ -91,7 +91,17 @@ export default function PointCloudPanoramaViewer() {
     setIsLoading(false);
   };
 
-  const isFullyLoaded = pointCloudData && scanMetadata && panoramaBlobs.size > 0;
+  // Show viewer if we have point cloud and scan metadata (panoramas optional)
+  const isFullyLoaded = pointCloudData && scanMetadata;
+
+  // Log for debugging
+  if (isFullyLoaded) {
+    console.log('Viewer loaded:', {
+      pointCount: pointCloudData?.pointCount,
+      scanCount: scanMetadata?.scans?.length,
+      panoramaCount: panoramaBlobs.size
+    });
+  }
 
   return (
     <div className="pcpv-root">
